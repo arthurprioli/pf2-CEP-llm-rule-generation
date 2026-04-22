@@ -7,6 +7,8 @@ from app.models import RegraCEP
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_database():
+    print("[Setup] Limpando o banco antigo...")
+    Base.metadata.drop_all(bind=engine)
     print("[Setup]: Criando tabelas de teste...")
     Base.metadata.create_all(bind=engine)
     yield
