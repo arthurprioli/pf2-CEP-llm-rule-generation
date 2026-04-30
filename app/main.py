@@ -1,9 +1,17 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+import datetime
+from re import match
+from datetime import datetime
+
+from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
 
-from .database import engine
+from .database import engine, get_db
+from . import siddhi_client
 
 
 def _get_db():
@@ -18,6 +26,8 @@ app = FastAPI(
 )
 
 models.Base.metadata.create_all(bind=engine)
+
+templates = Jinja2Templates(directory="app/templates")
 
 @app.get("/regras", response_model=List[schemas.RegraResponse])
 def listar_regras(status_regra: str = None, db: Session = Depends(_get_db)):
@@ -44,8 +54,31 @@ def criar_regra_manual(regra: schemas.RegraCreate, db: Session = Depends(_get_db
   db.commit()
   db.refresh(nova_regra)
 
+  sucesso = siddhi_client.deploy_regra_siddhi(nova_regra.id_regra, nova_regra.payload_regra)
+  if not sucesso:
+    print("WARNING: Regra salva no banco, mas falha ao iniciar no CEP.")
+
+
   print(f"[INJEÇÃO DE REGRA] Injetando regra MANUAL {nova_regra.id_regra} no Siddhi")
   return nova_regra
+
+@app.post("/regras/matches", status_code=status.HTTP_200_OK)
+def registrar_match(match: schemas.MatchPayload, db: Session = Depends(_get_db)):
+  """
+  Endpoint para receber notificações de matches do Siddhi.
+  """
+  regra = db.query(models.RegraCEP).filter(models.RegraCEP.id_regra == match.id_regra).first()
+
+  if not regra:
+    raise HTTPException(status_code=404, detail=f"Regra {match.id_regra} não encontrada")
+  
+  regra.num_ocorrencias += 1
+  regra.ultima_ocorrencia = datetime.utcnow()
+
+  db.commit()
+
+  print(f"[MATCH DETECTADO] Regra {match.id_regra} teve um match! Total de ocorrências: {regra.num_ocorrencias}")
+  return {"status": "Sucesso!", "mensagem": "Score atualizado!"}
 
 @app.put("/regras/{id_regra}/status", response_model=schemas.RegraResponse)
 def atualizar_status_regra(id_regra: UUID, update_data: schemas.RegraStatusUpdate, db: Session = Depends(_get_db)):
@@ -63,7 +96,20 @@ def atualizar_status_regra(id_regra: UUID, update_data: schemas.RegraStatusUpdat
 
   if regra.status == "Aprovada":
     print(f"[ATUALIZAÇÃO DE REGRA] Regra APROVADA! Atualizando {regra.id_regra} no Siddhi")
+    siddhi_client.deploy_regra_siddhi(str(regra.id_regra), regra.payload_regra)
   elif regra.status == "Recusada":
     print(f"[ATUALIZAÇÃO DE REGRA] Regra RECUSADA! Atualizando {regra.id_regra} no Siddhi")
+    siddhi_client.remover_regra_siddhi(str(regra.id_regra))
 
   return regra
+
+@app.get("/painel", response_class=HTMLResponse)
+def painel(request: Request, db: Session = Depends(_get_db)):
+  """Interface visual da tabela de regras"""
+  regras = db.query(models.RegraCEP).order_by(
+    models.RegraCEP.status,
+    models.RegraCEP.num_ocorrencias.desc(),
+  ).all()
+
+  return templates.TemplateResponse(request=request, name="painel.html", context={"request": request, "regras": regras})
+      

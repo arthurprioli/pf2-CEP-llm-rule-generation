@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel CEP & IA</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Orquestrador de Regras CEP</h2>
+        <span class="badge bg-primary fs-6">Motor FastAPI Ativo</span>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Status</th>
+                        <th>Payload (Sintaxe Siddhi)</th>
+                        <th>Ocorrências</th>
+                        <th>Score</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for regra in regras %}
+                    <tr>
+                        <td>
+                            {% if regra.status == 'Aprovada' %}
+                                <span class="badge bg-success">Aprovada</span>
+                            {% elif regra.status == 'Sugerida' %}
+                                <span class="badge bg-warning text-dark">Sugerida (IA)</span>
+                            {% elif regra.status == 'Recusada' %}
+                                <span class="badge bg-danger">Recusada</span>
+                            {% elif regra.status == 'Inativa' %}
+                                <span class="badge bg-secondary">Inativa</span>
+                            {% else %}
+                                <span class="badge bg-info">{{ regra.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td><code class="text-dark">{{ regra.payload_regra }}</code></td>
+                        <td><strong>{{ regra.num_ocorrencias }}</strong></td>
+                        <td>{{ "%.4f"|format(regra.score_relevancia) }}</td>
+                        <td>
+                            {% if regra.status in ['Sugerida', 'Manual', 'Inativa'] %}
+                                <button onclick="mudarStatus('{{ regra.id_regra }}', 'Aprovada')" class="btn btn-sm btn-success">Aprovar (Push)</button>
+                            {% endif %}
+                            
+                            {% if regra.status == 'Sugerida' %}
+                                <button onclick="mudarStatus('{{ regra.id_regra }}', 'Recusada')" class="btn btn-sm btn-danger">Recusar</button>
+                            {% endif %}
+
+                            {% if regra.status == 'Aprovada' %}
+                                <button onclick="mudarStatus('{{ regra.id_regra }}', 'Inativa')" class="btn btn-sm btn-outline-danger">Inativar (Pop)</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">Nenhuma regra encontrada no banco.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function mudarStatus(idRegra, novoStatus) {
+        if (!confirm(`Tem a certeza que deseja alterar o status para ${novoStatus}?`)) return;
+
+        try {
+            const resposta = await fetch(`/regras/${idRegra}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: novoStatus })
+            });
+
+            if (resposta.ok) {
+                // Se a API retornar sucesso, recarrega a página para atualizar a tabela
+                window.location.reload();
+            } else {
+                const erro = await resposta.json();
+                alert(`Erro ao alterar: ${JSON.stringify(erro)}`);
+            }
+        } catch (error) {
+            console.error('Erro na requisição:', error);
+            alert('Falha ao contactar o servidor.');
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -28,3 +28,7 @@ class RegraResponse(RegraBase):
 
     model_config = ConfigDict(from_attributes = True)
 
+
+class MatchPayload(BaseModel):
+    id_regra: UUID
+    alerta: str = "PADRÃO DETECTADO NOS SEUS DADOS"
