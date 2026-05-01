@@ -26,7 +26,7 @@ class RegraResponse(RegraBase):
     dt_criacao: datetime
     dt_atualizacao: datetime
 
-    model_config = ConfigDict(from_attributes = True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MatchPayload(BaseModel):

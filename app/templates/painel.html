@@ -11,7 +11,6 @@
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Orquestrador de Regras CEP</h2>
-        <span class="badge bg-primary fs-6">Motor FastAPI Ativo</span>
     </div>
 
     <div class="card shadow-sm">
@@ -20,7 +19,7 @@
                 <thead class="table-dark">
                     <tr>
                         <th>Status</th>
-                        <th>Payload (Sintaxe Siddhi)</th>
+                        <th>Sintaxe Siddhi</th>
                         <th>Ocorrências</th>
                         <th>Score</th>
                         <th>Ações</th>
@@ -36,8 +35,6 @@
                                 <span class="badge bg-warning text-dark">Sugerida (IA)</span>
                             {% elif regra.status == 'Recusada' %}
                                 <span class="badge bg-danger">Recusada</span>
-                            {% elif regra.status == 'Inativa' %}
-                                <span class="badge bg-secondary">Inativa</span>
                             {% else %}
                                 <span class="badge bg-info">{{ regra.status }}</span>
                             {% endif %}
@@ -47,7 +44,7 @@
                         <td>{{ "%.4f"|format(regra.score_relevancia) }}</td>
                         <td>
                             {% if regra.status in ['Sugerida', 'Manual', 'Inativa'] %}
-                                <button onclick="mudarStatus('{{ regra.id_regra }}', 'Aprovada')" class="btn btn-sm btn-success">Aprovar (Push)</button>
+                                <button onclick="mudarStatus('{{ regra.id_regra }}', 'Aprovada')" class="btn btn-sm btn-success">Aprovar Regra</button>
                             {% endif %}
                             
                             {% if regra.status == 'Sugerida' %}
@@ -55,7 +52,7 @@
                             {% endif %}
 
                             {% if regra.status == 'Aprovada' %}
-                                <button onclick="mudarStatus('{{ regra.id_regra }}', 'Inativa')" class="btn btn-sm btn-outline-danger">Inativar (Pop)</button>
+                                <button onclick="mudarStatus('{{ regra.id_regra }}', 'Inativa')" class="btn btn-sm btn-outline-danger">Desativar</button>
                             {% endif %}
                         </td>
                     </tr>
@@ -82,7 +79,6 @@
             });
 
             if (resposta.ok) {
-                // Se a API retornar sucesso, recarrega a página para atualizar a tabela
                 window.location.reload();
             } else {
                 const erro = await resposta.json();

@@ -3,9 +3,10 @@ import os
 
 SIDDHI_RUNNER_URL = os.getenv("SIDDHI_RUNNER_URL")
 
+
 def deploy_regra_siddhi(id_regra: str, payload: str):
     """
-        Faz um PUSH de uma regra no Siddhi.
+    Faz um PUSH de uma regra no Siddhi.
     """
     app_name = f"Regra_{str(id_regra).replace('-', '_')}"
 
@@ -26,10 +27,11 @@ def deploy_regra_siddhi(id_regra: str, payload: str):
         if hasattr(e, "response") and e.response is not None:
             print(f"[SIDDHI] Resposta do erro: {e.response.text}")
         return False
-    
+
+
 def remover_regra_siddhi(id_regra: str):
     """
-        Remove uma regra do Siddhi com DELETE.
+    Remove uma regra do Siddhi com DELETE.
     """
     app_name = f"Regra_{str(id_regra).replace('-', '_')}"
 
@@ -43,4 +45,3 @@ def remover_regra_siddhi(id_regra: str):
         if hasattr(e, "response") and e.response is not None:
             print(f"[SIDDHI] Resposta do erro: {e.response.text}")
         return False
-
