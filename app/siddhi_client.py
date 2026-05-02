@@ -11,14 +11,14 @@ def deploy_regra_siddhi(id_regra: str, payload: str):
     app_name = f"Regra_{str(id_regra).replace('-', '_')}"
 
     if "@App:name" not in payload:
-        siddhi_app_string = f"@App:name('{app_name}')\\n" + payload
+        siddhi_app_string = f"@App:name('{app_name}')\n{payload}"
     else:
         siddhi_app_string = payload
 
     headers = {"Content-Type": "text/plain"}
 
     try:
-        resp = requests.post(SIDDHI_RUNNER_URL, data=siddhi_app_string, headers=headers)
+        resp = requests.post(SIDDHI_RUNNER_URL, data=siddhi_app_string, headers=headers, auth=('admin', 'admin'))
         resp.raise_for_status()
         print(f"[SIDDHI] Regra {id_regra} implantada com sucesso no Siddhi Runner.")
         return True
@@ -36,7 +36,7 @@ def remover_regra_siddhi(id_regra: str):
     app_name = f"Regra_{str(id_regra).replace('-', '_')}"
 
     try:
-        resp = requests.delete(f"{SIDDHI_RUNNER_URL}/{app_name}")
+        resp = requests.delete(f"{SIDDHI_RUNNER_URL}/{app_name}", auth=('admin', 'admin'))
         resp.raise_for_status()
         print(f"[SIDDHI] Regra {id_regra} removida com sucesso do Siddhi Runner.")
         return True

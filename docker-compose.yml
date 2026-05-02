@@ -15,7 +15,8 @@ services:
     image: siddhiio/siddhi-runner-alpine:latest
     container_name: cep_siddhi
     ports:
-      - "8006:8006"
+      - "9090:9090"
+      - "8080:8080"
 
 volumes:
   postgres_data:
