@@ -17,6 +17,8 @@ services:
     ports:
       - "9090:9090"
       - "8080:8080"
+    volumes:
+      - ./siddhi-workspace:/home/siddhi_user/siddhi-runner/wso2/runner/deployment/siddhi-files
 
 volumes:
   postgres_data:

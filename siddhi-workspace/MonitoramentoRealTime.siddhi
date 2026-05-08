@@ -1,0 +1,11 @@
+@App:name('MonitoramentoRealTime')
+
+@source(type='http', receiver.url='http://0.0.0.0:8080/eventos', @map(type='json'))
+@sink(type='inMemory', topic='EventosSimulador')
+define stream FluxoEntrada (usuario string, texto string, acao string);
+
+define table CacheEventos (usuario string, texto string, acao string);
+
+from FluxoEntrada
+select usuario, texto, acao
+insert into CacheEventos;

@@ -43,7 +43,7 @@
                         <td><strong>{{ regra.num_ocorrencias }}</strong></td>
                         <td>{{ "%.4f"|format(regra.score_relevancia) }}</td>
                         <td>
-                            {% if regra.status in ['Sugerida', 'Manual', 'Inativa'] %}
+                            {% if regra.status in ['Sugerida', 'Inativa'] %}
                                 <button onclick="mudarStatus('{{ regra.id_regra }}', 'Aprovada')" class="btn btn-sm btn-success">Aprovar Regra</button>
                             {% endif %}
                             

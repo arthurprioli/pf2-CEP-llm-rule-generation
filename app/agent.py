@@ -114,14 +114,20 @@ def gerar_sugestoes(dados_reais, recusadas):
     {dados_reais}
     ---
 
-    INSTRUÇÕES RÍGIDAS:
-    1. A regra DEVE usar a stream de entrada: define stream FluxoEntrada (usuario string, texto string, acao string);
-    2. A regra DEVE ter um @App:name('DetectaAnomaliaIA') e jogar o resultado numa stream de saída (ex: insert into AlertasStream;)
-    3. RETORNE EXCLUSIVAMENTE UM ARRAY JSON VÁLIDO. Sem explicações, sem formatação markdown. 
+    INSTRUÇÕES RÍGIDAS (Siga a gramática estrita do motor WSO2 Siddhi):
+    1. A stream de entrada DEVE OBRIGATORIAMENTE ser: 
+       @source(type='inMemory', topic='EventosSimulador') 
+       define stream FluxoEntrada (usuario string, texto string, acao string);
+    2. A regra DEVE ter um nome único, ex: @App:name('DetectaAnomaliaIA')
+    3. Crie uma stream de saída com log, usando tipos de dados corretos (count() retorna 'long'): 
+       @sink(type='log', prefix='[ALERTA IA]') 
+       define stream AlertasStream (usuario string, tipo_alerta string, quantidade long);
+    4. ORDEM OBRIGATÓRIA DA QUERY: Você deve seguir ESTRITAMENTE esta ordem: 'from' -> 'select' -> 'group by' -> 'having' -> 'insert into'. NUNCA coloque 'group by' antes do 'select'.
+    5. RETORNE EXCLUSIVAMENTE UM ARRAY JSON VÁLIDO. Sem explicações, sem blocos markdown.
     
     EXEMPLO DE RESPOSTA ESPERADA:
     [
-      {{"payload": "@App:name('BloqueioAtaque') define stream FluxoEntrada (usuario string, texto string, acao string); @sink(type='log') define stream Alertas (usuario string); from FluxoEntrada[acao == 'ataque_db'] select usuario insert into Alertas;"}}
+      {{"payload": "@App:name('BloqueioAtaqueIA') @source(type='inMemory', topic='EventosSimulador') define stream FluxoEntrada (usuario string, texto string, acao string); @sink(type='log', prefix='[ALERTA]') define stream AlertasStream (usuario string, tentativas long); from FluxoEntrada[acao == 'ataque_db']#window.timeBatch(10 sec) select usuario, count() as tentativas group by usuario having tentativas > 3 insert into AlertasStream;"}}
     ]
     """)
 
