@@ -5,12 +5,12 @@ import random
 SIDDHI_ENDPOINT = "http://localhost:8080/eventos"
 
 eventos = [
-    {"usuario": "joao_silva", "texto": "Login realizado com sucesso", "acao": "login"},
-    {"usuario": "maria_souza", "texto": "Adicionou sapato ao carrinho", "acao": "navegacao"},
-    {"usuario": "HACKER_99", "texto": "Tentativa de injeção SQL falhou", "acao": "ataque_db"},
-    {"usuario": "bot_russo", "texto": "1000 tentativas de login falhadas", "acao": "brute_force"},
-    {"usuario": "pedro_alves", "texto": "Compra de R$ 50,00 aprovada", "acao": "compra_normal"},
-    {"usuario": "conta_falsa", "texto": "Compra de R$ 15.000,00 às 3h da manhã", "acao": "compra_suspeita"}
+    {"usuario": "joao_silva", "texto": "Vi jogo do Fluminense ontem"},
+    {"usuario": "maria_souza", "texto": "Convocação da seleção brasileira"},
+    {"usuario": "elon_musk_fa", "texto": "Guerra no Irã"},
+    {"usuario": "marcos_villas", "texto": "Lutei com um canguru"},
+    {"usuario": "donald_trump_10", "texto": "Bombas jogadas no Irã"},
+    {"usuario": "luca_ribeiro", "texto": "Album novo da chappelle roan"}
 ]
 
 print(f"🚀 Iniciando canhão de dados para: {SIDDHI_ENDPOINT}\n")

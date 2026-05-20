@@ -108,7 +108,7 @@ def executar_refeeding():
 
 def gerar_sugestoes(dados_reais, recusadas):
     prompt_template = PromptTemplate.from_template("""Você é um Cientista de Dados e Especialista em Complex Event Processing (CEP).
-    Sua tarefa é analisar DADOS REAIS e criar 1 nova regra SiddhiQL para detectar ataques (ex: brute_force, ataque_db, compra_suspeita).
+    Sua tarefa é analisar DADOS REAIS e criar 1 nova regra SiddhiQL para detectar padrões nos dados e sugerir regras com base nesses padrões.
 
     DADOS REAIS CAPTURADOS:
     ---
@@ -119,7 +119,7 @@ def gerar_sugestoes(dados_reais, recusadas):
     1. A stream de entrada DEVE OBRIGATORIAMENTE ser: 
        @source(type='inMemory', topic='EventosSimulador') 
        define stream FluxoEntrada (usuario string, texto string, acao string);
-    2. A regra DEVE ter um nome único, ex: @App:name('DetectaAnomaliaIA')
+    2. A regra DEVE ter um nome único, ex: @App:name('TuiteGuerraIA')
     3. Crie uma stream de saída com log, usando tipos de dados corretos (count() retorna 'long'): 
        @sink(type='log', prefix='[ALERTA IA]') 
        define stream AlertasStream (usuario string, tipo_alerta string, quantidade long);
