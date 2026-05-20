@@ -1,6 +1,7 @@
 import os
 
 from datetime import datetime, timedelta
+from decimal import Decimal
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from .database import SessionLocal
@@ -80,7 +81,7 @@ def executar_refeeding():
         )
         for regra in aprovadas:
             if not regra.ultima_ocorrencia or regra.ultima_ocorrencia < tempo_limite:
-                regra.score *= 0.95  # colocar dinâmismo?
+                regra.score_relevancia *= Decimal(0.95)  # colocar dinâmismo?
                 print(f"Score da regra {regra.id_regra} reduzido")
 
         amostra_dados = pegar_amostra_refeeding()
