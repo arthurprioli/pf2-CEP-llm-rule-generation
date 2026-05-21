@@ -1,7 +1,10 @@
+import re
 import requests
 import os
 
 SIDDHI_RUNNER_URL = os.getenv("SIDDHI_RUNNER_URL")
+
+_APP_NAME_RE = re.compile(r"@App:name\s*\(\s*['\"][^'\"]*['\"]\s*\)\s*")
 
 
 def deploy_regra_siddhi(id_regra: str, payload: str):
@@ -10,10 +13,12 @@ def deploy_regra_siddhi(id_regra: str, payload: str):
     """
     app_name = f"Regra_{str(id_regra).replace('-', '_')}"
 
-    if "@App:name" not in payload:
-        siddhi_app_string = f"@App:name('{app_name}')\n{payload}"
-    else:
-        siddhi_app_string = payload
+    payload = payload.replace("ID_REGRA_PLACEHOLDER", str(id_regra))
+    if "ID_REGRA_PLACEHOLDER" in payload or str(id_regra) not in payload:
+        print(f"[SIDDHI] AVISO: regra {id_regra} não contém id_regra no payload — matches não poderão ser correlacionados.")
+
+    payload_sem_nome = _APP_NAME_RE.sub("", payload, count=1).lstrip()
+    siddhi_app_string = f"@App:name('{app_name}')\n{payload_sem_nome}"
 
     headers = {"Content-Type": "text/plain"}
 

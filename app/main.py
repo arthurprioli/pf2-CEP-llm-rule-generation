@@ -1,6 +1,4 @@
-import datetime
-from re import match
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.templating import Jinja2Templates
@@ -72,10 +70,12 @@ def criar_regra_manual(regra: schemas.RegraCreate, db: Session = Depends(_get_db
 
 
 @app.post("/regras/matches", status_code=status.HTTP_200_OK)
-def registrar_match(match: schemas.MatchPayload, db: Session = Depends(_get_db)):
+def registrar_match(envelope: schemas.MatchPayloadEnvelope, db: Session = Depends(_get_db)):
     """
     Endpoint para receber notificações de matches do Siddhi.
+    O Siddhi JSON sink envia o evento em `{"event": {...}}`.
     """
+    match = envelope.event
     regra = (
         db.query(models.RegraCEP)
         .filter(models.RegraCEP.id_regra == match.id_regra)
@@ -88,12 +88,14 @@ def registrar_match(match: schemas.MatchPayload, db: Session = Depends(_get_db))
         )
 
     regra.num_ocorrencias += 1
-    regra.ultima_ocorrencia = datetime.utcnow()
+    regra.ultima_ocorrencia = datetime.now(timezone.utc)
 
     db.commit()
 
     print(
-        f"[MATCH DETECTADO] Regra {match.id_regra} teve um match! Total de ocorrências: {regra.num_ocorrencias}"
+        f"[MATCH DETECTADO] Regra {match.id_regra} disparou para {match.usuario} "
+        f"({match.tipo_alerta}, quantidade={match.quantidade}). "
+        f"Total de ocorrências: {regra.num_ocorrencias}"
     )
     return {"status": "Sucesso!", "mensagem": "Score atualizado!"}
 

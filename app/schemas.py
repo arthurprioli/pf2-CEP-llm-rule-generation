@@ -31,4 +31,10 @@ class RegraResponse(RegraBase):
 
 class MatchPayload(BaseModel):
     id_regra: UUID
-    alerta: str = "PADRÃO DETECTADO NOS SEUS DADOS"
+    usuario: str
+    tipo_alerta: str
+    quantidade: int
+
+
+class MatchPayloadEnvelope(BaseModel):
+    event: MatchPayload
