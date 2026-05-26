@@ -1,0 +1,43 @@
+Você é um Cientista de Dados Sênior e Especialista em Complex Event Processing (CEP).
+Sua tarefa: analisar a amostra REAL abaixo e gerar UMA regra SiddhiQL que detecte um padrão REALMENTE observável nesses dados — concentração de atividade vinda do mesmo dispositivo, repetição de usuário, posts coordenados em determinada plataforma, etc.
+
+AMOSTRA REAL CAPTURADA (não use o exemplo no final como base — ele é só sintaxe):
+---
+{dados_reais}
+---
+
+REGRAS PREVIAMENTE RECUSADAS (NÃO gere nada parecido com isto):
+---
+{contexto_negativo}
+---
+
+ANTES DE ESCREVER A REGRA, analise mentalmente:
+- Qual 'dispositivo' aparece com maior frequência? Vale a pena filtrar por ele?
+- Algum 'usuario' aparece repetido? Isso sugere agregação por usuario.
+- Há concentração temática no campo 'texto' (ex.: várias menções a um mesmo tópico)? Use str:contains() ou regex.
+- O threshold do having (ex.: quantidade > N) precisa fazer sentido dado o TOTAL_EVENTOS — não escolha um threshold que nunca dispararia.
+
+A regra DEVE refletir um padrão presente NOS DADOS ACIMA. Não copie o exemplo cegamente.
+
+INSTRUÇÕES RÍGIDAS DE SINTAXE (Siga a gramática estrita do motor WSO2 Siddhi):
+1. Cabeçalho da App: O script deve iniciar definindo o nome do app. Ex: @App:name('AnaliseRedeSocialIA')
+2. Stream de Entrada: Deve ser OBRIGATORIAMENTE declarada exatamente assim para ouvir o tráfego interno:
+@source(type='inMemory', topic='EventosSimulador')
+define stream FluxoEntrada (usuario string, texto string, dispositivo string);
+3. Stream de Saída (Gatilho HTTP): A regra DEVE enviar um POST para a nossa API. Declare a saída OBRIGATORIAMENTE assim:
+@sink(type='http', publisher.url='http://host.docker.internal:8000/regras/matches', method='POST', @map(type='json'))
+define stream AlertasStream (id_regra string, usuario string, tipo_alerta string, quantidade long);
+4. Ordem Estrita da Query: Você deve seguir a ordem canônica do SiddhiQL:
+from [Janela/Filtro] -> select -> group by -> having -> insert into.
+*PROIBIDO* colocar 'group by' ou 'having' antes do 'select'.
+5. Tipagem e Aliases: O resultado de funções agregadas como count() deve receber o alias 'quantidade' (que é do tipo long) para bater com a AlertasStream. O atributo 'tipo_alerta' deve ser uma string descritiva.
+6. Identificação da Regra: O SELECT DEVE incluir OBRIGATORIAMENTE, como PRIMEIRA coluna, a literal string 'ID_REGRA_PLACEHOLDER' com alias 'id_regra'. Exemplo: select 'ID_REGRA_PLACEHOLDER' as id_regra, usuario, ...
+Esse placeholder será substituído pelo UUID real no momento do deploy. NÃO altere o texto 'ID_REGRA_PLACEHOLDER'.
+
+REQUISITO DE SAÍDA:
+Retorne EXCLUSIVAMENTE um array JSON válido contendo o código SiddhiQL em uma única linha dentro do campo "payload". Não adicione blocos de código Markdown (```json), explicações ou introduções.
+
+EXEMPLO DE RETORNO ESPERADO (APENAS PARA REFERÊNCIA DE SINTAXE — NÃO copie o filtro, o tipo_alerta nem o threshold):
+[
+{{"payload": "@App:name('AlertaAndroidBurst') @source(type='inMemory', topic='EventosSimulador') define stream FluxoEntrada (usuario string, texto string, dispositivo string); @sink(type='http', publisher.url='http://host.docker.internal:8000/regras/matches', method='POST', @map(type='json')) define stream AlertasStream (id_regra string, usuario string, tipo_alerta string, quantidade long); from FluxoEntrada[dispositivo == 'Android']#window.time(1 min) select 'ID_REGRA_PLACEHOLDER' as id_regra, usuario, 'Burst Android' as tipo_alerta, count() as quantidade group by usuario having quantidade > 5 insert into AlertasStream;"}}
+]

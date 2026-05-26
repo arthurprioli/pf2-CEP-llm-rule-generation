@@ -9,7 +9,7 @@ from typing import List
 from uuid import UUID
 
 from .database import engine, get_db
-from . import siddhi_client
+from .siddhi_client import siddhi
 from .agent import executar_refeeding
 
 
@@ -59,9 +59,7 @@ def criar_regra_manual(regra: schemas.RegraCreate, db: Session = Depends(_get_db
     db.commit()
     db.refresh(nova_regra)
 
-    sucesso = siddhi_client.deploy_regra_siddhi(
-        nova_regra.id_regra, nova_regra.payload_regra
-    )
+    sucesso = siddhi.deploy_rule(nova_regra.id_regra, nova_regra.payload_regra)
     if not sucesso:
         print("WARNING: Regra salva no banco, mas falha ao iniciar no CEP.")
 
@@ -124,12 +122,12 @@ def atualizar_status_regra(
         print(
             f"[ATUALIZAÇÃO DE REGRA] Regra APROVADA! Atualizando {regra.id_regra} no Siddhi"
         )
-        siddhi_client.deploy_regra_siddhi(str(regra.id_regra), regra.payload_regra)
+        siddhi.deploy_rule(str(regra.id_regra), regra.payload_regra)
     elif regra.status == "Recusada":
         print(
             f"[ATUALIZAÇÃO DE REGRA] Regra RECUSADA! Atualizando {regra.id_regra} no Siddhi"
         )
-        siddhi_client.remover_regra_siddhi(str(regra.id_regra))
+        siddhi.remove_rule(str(regra.id_regra))
 
     return regra
 
