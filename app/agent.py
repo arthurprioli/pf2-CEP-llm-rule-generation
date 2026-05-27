@@ -17,6 +17,7 @@ PROMPT_PATH = Path(__file__).parent / "prompts" / "refeeder.txt"
 JANELA_DECAIMENTO = timedelta(days=7)
 FATOR_DECAIMENTO = Decimal("0.95")
 SCORE_INICIAL_SUGESTAO = 0.5
+AMOSTRA_TAMANHO = int(os.getenv("REFEED_SAMPLE_SIZE", "50"))
 
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash",
@@ -57,7 +58,7 @@ def _formatar_amostra(registros: list[list]) -> str:
 
 def _buscar_amostra() -> str | None:
     print("Consultando siddhi para coletar amostra de dados")
-    registros = siddhi.fetch_cache()
+    registros = siddhi.fetch_cache(limit=AMOSTRA_TAMANHO)
     if not registros:
         return None
     return _formatar_amostra(registros)

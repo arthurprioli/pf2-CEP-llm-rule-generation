@@ -24,8 +24,13 @@ class SiddhiClient:
         timeout: float = 5.0,
         base_app: str = BASE_APP_NAME,
     ):
-        self.runner_url = runner_url or os.getenv("SIDDHI_RUNNER_URL")
-        self.query_url = query_url or os.getenv("SIDDHI_QUERY_URL")
+        # Prefer explicit args, then environment, then sensible local defaults
+        self.runner_url = (
+            runner_url or os.getenv("SIDDHI_RUNNER_URL")
+        )
+        self.query_url = (
+            query_url or os.getenv("SIDDHI_QUERY_URL")
+        )
         self.auth = (
             user or os.getenv("SIDDHI_USER", "admin"),
             password or os.getenv("SIDDHI_PASSWORD", "admin"),
@@ -93,8 +98,17 @@ class SiddhiClient:
             return None
         return resp.json().get("records", [])
 
-    def fetch_cache(self) -> list | None:
-        return self.store_query("from CacheEventos select *;")
+    def fetch_cache(self, limit: int | None = None) -> list | None:
+        """Fetch events from the CacheEventos stream.
+
+        If `limit` is provided, use a Siddhi length window to return up to that
+        many records to avoid sending excessive data to downstream components.
+        """
+        if limit is not None:
+            query = f"from CacheEventos#window.length({limit}) select *;"
+        else:
+            query = "from CacheEventos select *;"
+        return self.store_query(query)
 
     def clear_cache(self) -> bool:
         if self.store_query("delete CacheEventos on true;") is None:
@@ -110,3 +124,13 @@ class SiddhiClient:
 
 
 siddhi = SiddhiClient()
+
+
+def deploy_regra_siddhi(id_regra: str, payload: str) -> bool:
+    """Compatibility wrapper used by tests and other modules."""
+    return siddhi.deploy_rule(id_regra, payload)
+
+
+def remover_regra_siddhi(id_regra: str) -> bool:
+    """Compatibility wrapper used by tests and other modules."""
+    return siddhi.remove_rule(id_regra)

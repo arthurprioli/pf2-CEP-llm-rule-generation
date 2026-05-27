@@ -2,10 +2,11 @@
 
 @source(type='http', receiver.url='http://0.0.0.0:8080/eventos', @map(type='json'))
 @sink(type='inMemory', topic='EventosSimulador')
-define stream FluxoEntrada (usuario string, texto string, dispositivo string);
+define stream FluxoEntrada (id string, fk_account_id string, location_id string, possibly_sensitive string, reply_settings string, source string, language string, timestamp string, like_count string, quote_count string, reply_count string, retweet_count string, text string);
 
-define table CacheEventos (usuario string, texto string, dispositivo string);
+define table CacheEventos (id string, fk_account_id string, location_id string, possibly_sensitive string, reply_settings string, source string, language string, timestamp string, like_count string, quote_count string, reply_count string, retweet_count string, text string);
+
 
 from FluxoEntrada
-select usuario, texto, dispositivo
+select id, fk_account_id, location_id, possibly_sensitive, reply_settings, source, language, timestamp, like_count, quote_count, reply_count, retweet_count, text
 insert into CacheEventos;
