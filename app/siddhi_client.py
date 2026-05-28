@@ -47,7 +47,8 @@ class SiddhiClient:
                 "matches não poderão ser correlacionados."
             )
 
-        payload_sem_nome = _APP_NAME_RE.sub("", payload, count=1).lstrip()
+        # Remove any existing @App:name occurrences to avoid multiple definitions
+        payload_sem_nome = _APP_NAME_RE.sub("", payload).lstrip()
         siddhi_app = f"@App:name('{app_name}')\n{payload_sem_nome}"
 
         try:
@@ -62,7 +63,7 @@ class SiddhiClient:
             print(f"[SIDDHI] Regra {id_regra} implantada com sucesso.")
             return True
         except requests.RequestException as e:
-            self._log_error(f"implantar regra {id_regra}", e)
+            self._log_error(f"implantar regra {id_regra}", e, siddhi_app)
             return False
 
     def remove_rule(self, id_regra: str) -> bool:
@@ -101,14 +102,19 @@ class SiddhiClient:
     def fetch_cache(self, limit: int | None = None) -> list | None:
         """Fetch events from the CacheEventos stream.
 
-        If `limit` is provided, use a Siddhi length window to return up to that
-        many records to avoid sending excessive data to downstream components.
+        If `limit` is provided, fetch all records from Siddhi and perform a
+        client-side sample (take the most recent `limit` records). Some
+        Siddhi runner endpoints may reject window syntax (e.g. `#window`), so
+        sampling in Python avoids syntax incompatibilities while keeping the
+        payload small.
         """
-        if limit is not None:
-            query = f"from CacheEventos#window.length({limit}) select *;"
-        else:
-            query = "from CacheEventos select *;"
-        return self.store_query(query)
+        query = "from CacheEventos select *;"
+        records = self.store_query(query)
+        if records is None:
+            return None
+        if limit is not None and isinstance(records, list) and len(records) > limit:
+            return records[-limit:]
+        return records
 
     def clear_cache(self) -> bool:
         if self.store_query("delete CacheEventos on true;") is None:
@@ -117,10 +123,12 @@ class SiddhiClient:
         return True
 
     @staticmethod
-    def _log_error(acao: str, e: requests.RequestException) -> None:
+    def _log_error(acao: str, e: requests.RequestException, payload: str | None = None) -> None:
         print(f"[SIDDHI] Erro ao {acao}: {e}")
         if getattr(e, "response", None) is not None:
             print(f"[SIDDHI] Resposta do erro: {e.response.text}")
+        if payload is not None:
+            print("[SIDDHI] Payload enviado:\n" + payload)
 
 
 siddhi = SiddhiClient()
